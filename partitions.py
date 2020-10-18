@@ -13,7 +13,12 @@ from operator import add, sub
 
 
 def main(argv):
-    place = int(argv[0])
+    try:
+        place = int(argv[0])
+
+    except IndexError:
+        print("Usage:\n\tpython partitions.py <nth>")
+        sys.exit(1)
 
     gen = seq()
     for i in range(1, place+1):
