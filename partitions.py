@@ -27,30 +27,42 @@ def main(argv):
         print(i, n)
 
 
-def seq():
-    op_cycle = itertools.cycle((add, add, sub, sub))
-    diff_cycle = itertools.cycle((1, 2))
+def arithmetic_seq(a_0, d):
+    a_n = a_0
+    while True:
+        yield a_n
+        a_n += d
 
-    ops = [next(op_cycle), next(op_cycle), next(op_cycle)]
-    diffs = [1, 3]
-    offsets = [1, 2, 5]
-    seq = [1, 1]
+
+def variable_arithmetic_seq(a_0, D):
+    a_n = a_0
+    while True:
+        yield a_n
+        a_n += next(D)
+
+
+def seq():
+    mem = [1]
 
     while True:
+        ops = itertools.cycle((add, add, sub, sub))
+        diffs = itertools.chain.from_iterable(
+            zip(arithmetic_seq(1, 1), arithmetic_seq(3, 2)))
+        offsets = variable_arithmetic_seq(1, diffs)
+
+        yield mem[-1]
+
         n = 0
-        for op, offset in zip(ops, offsets):
-            try:
-                n = op(n, seq[-offset])
+        try:
+            for offset in offsets:
+                n = next(ops)(n, mem[-offset])
 
-            except IndexError:
-                pass
+        except IndexError as idx_err:
+            pass
 
-        seq.append(n)
-        ops.append(next(op_cycle))
-        diffs.append(diffs[-2] + next(diff_cycle))
-        offsets.append(offsets[-1] + diffs[-1])
+        mem.append(n)
 
-        yield seq[-3]
+    return mem
 
 
 if __name__ == "__main__":
