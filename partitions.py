@@ -7,9 +7,10 @@ on the sequence of numbers of unique partitions for consecutive integers.
 
 
 import sys
-import itertools
+import functools
+import operator as op
 
-from operator import add, sub
+from itertools import chain, count, cycle, repeat, starmap
 
 
 def main(argv):
@@ -24,7 +25,7 @@ def main(argv):
     for i in range(1, place+1):
         n = next(gen)
 
-        print(i, n)
+        print(n)
 
 
 def arithmetic_seq(a_0, d):
@@ -41,28 +42,38 @@ def variable_arithmetic_seq(a_0, D):
         a_n += next(D)
 
 
+def offset_gen():
+    diffs = chain.from_iterable(
+        zip(arithmetic_seq(1, 1), arithmetic_seq(3, 2)))
+
+    p = 0
+    while True:
+        yield (-1)**((p // 2) % 2)
+        p += 1
+        for i in range(next(diffs)-1):
+            yield 0
+
+
 def seq():
+    wholes = count(0)
+    evens = count(2, 2)
+    zero_counts = chain.from_iterable(zip(wholes, evens))
+    signs = cycle(((1,), (1,), (-1,), (-1,)))
+    zero_groups = cycle, (repeat, zip(repeat(0), zero_counts))
+
+    factors = chain.from_iterable(chain.from_iterable(zip(
+        signs,
+        zero_groups)))
+
+    factor_mem = []
     mem = [1]
 
-    while True:
-        ops = itertools.cycle((add, add, sub, sub))
-        diffs = itertools.chain.from_iterable(
-            zip(arithmetic_seq(1, 1), arithmetic_seq(3, 2)))
-        offsets = variable_arithmetic_seq(1, diffs)
+    for factor in factors:
+        factor_mem.append(factor)
 
-        yield mem[-1]
+        mem.insert(0, sum(starmap(op.mul, zip(factor_mem, mem))))
 
-        n = 0
-        try:
-            for offset in offsets:
-                n = next(ops)(n, mem[-offset])
-
-        except IndexError as idx_err:
-            pass
-
-        mem.append(n)
-
-    return mem
+        yield mem[0]
 
 
 if __name__ == "__main__":
